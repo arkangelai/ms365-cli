@@ -29,7 +29,7 @@ function acquireRefreshLock() {
   while (Date.now() < deadline) {
     try {
       // O_CREAT | O_EXCL: fails atomically if file already exists
-      const fd = openSync(lockPath, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_WRONLY);
+      const fd = openSync(lockPath, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_WRONLY, 0o600);
       closeSync(fd);
       // Write PID + timestamp for stale lock detection
       writeFileSync(lockPath, JSON.stringify({ pid: process.pid, ts: Date.now() }));
@@ -172,6 +172,7 @@ export function saveCreds(creds) {
   try {
     // Ensure directory exists
     mkdirSync(dirname(credsPath), { recursive: true });
+    chmodSync(dirname(credsPath), 0o700);
     
     // Write credentials
     writeFileSync(credsPath, JSON.stringify(creds, null, 2), 'utf-8');
@@ -485,7 +486,8 @@ export async function login({ scopes, addScopes, exclude, accountType } = {}) {
     const typeLabel = detectedType === 'personal' ? 'Personal Microsoft Account' : 'Work/School Account';
     console.log('\n✅ Authentication successful!');
     console.log(`   Account type: ${typeLabel}`);
-    console.log(`   Credentials saved to: ${config.getCredsPath()}`);
+    console.log(`   Credentials saved to: ${config.getCredsPath()} (plaintext local file, mode 600)`);
+    console.log('   Default login uses least-privilege read scopes. Add write scopes explicitly for mutating commands.');
     
     return true;
   } catch (error) {
@@ -499,9 +501,15 @@ export async function login({ scopes, addScopes, exclude, accountType } = {}) {
  */
 export function logout() {
   const credsPath = config.getCredsPath();
+  const lockPath = `${credsPath}.lock`;
   
   try {
     unlinkSync(credsPath);
+    try {
+      unlinkSync(lockPath);
+    } catch {
+      // Ignore missing or stale lock files on logout.
+    }
     console.log('✅ Logged out successfully.');
     return true;
   } catch (error) {

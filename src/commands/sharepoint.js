@@ -11,9 +11,9 @@ import {
 import { handleError } from '../utils/error.js';
 import { readFile } from 'fs/promises';
 import { basename } from 'path';
-import { createWriteStream } from 'fs';
 import { stat } from 'fs/promises';
 import { ensureWorkAccount } from '../utils/account.js';
+import { assertSafeToWrite, createSafeWriteStream, resolveOutputPath } from '../utils/files.js';
 
 /**
  * SharePoint commands
@@ -101,7 +101,7 @@ export async function listFiles(site, path = '', options = {}) {
 export async function downloadFile(site, remotePath, localPath, options = {}) {
   ensureWorkAccount('sharepoint');
   try {
-    const { json = false } = options;
+    const { json = false, force = false } = options;
     
     if (!site || !remotePath) {
       throw new Error('Site and remote path are required');
@@ -117,7 +117,8 @@ export async function downloadFile(site, remotePath, localPath, options = {}) {
     }
     
     // Determine local path
-    const targetPath = localPath || metadata.name;
+    const targetPath = resolveOutputPath(localPath, metadata.name);
+    assertSafeToWrite(targetPath, { force });
     
     if (!json) {
       console.log(`⬇️  Downloading: ${metadata.name}`);
@@ -128,7 +129,7 @@ export async function downloadFile(site, remotePath, localPath, options = {}) {
     const response = await graphClient.sharepoint.download(site, remotePath);
     
     // Write to file
-    const fileStream = createWriteStream(targetPath);
+    const fileStream = createSafeWriteStream(targetPath, { force });
     const reader = response.body.getReader();
     
     let downloadedBytes = 0;

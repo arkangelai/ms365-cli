@@ -143,9 +143,11 @@ mailCommand
   .argument('<message-id>', 'Email ID')
   .argument('<attachment-id>', 'Attachment ID')
   .argument('[local-path]', 'Local file path (default: attachment name)')
+  .option('--force', 'Overwrite an existing local file')
   .option('--json', 'Output as JSON')
   .action(async (messageId, attachmentId, localPath, options) => {
     await mailCommands.downloadAttachment(messageId, attachmentId, localPath, {
+      force: options.force,
       json: options.json,
     });
   });
@@ -380,9 +382,11 @@ calendarCommand
   .command('delete')
   .description('Delete calendar event')
   .argument('<id>', 'Event ID')
+  .option('--force', 'Skip confirmation prompt')
   .option('--json', 'Output as JSON')
   .action(async (id, options) => {
     await calendarCommands.delete(id, {
+      force: options.force,
       json: options.json,
     });
   });
@@ -422,9 +426,11 @@ onedriveCommand
   .description('Download file from OneDrive')
   .argument('<remote-path>', 'Remote file path')
   .argument('[local-path]', 'Local destination path (default: current directory)')
+  .option('--force', 'Overwrite an existing local file')
   .option('--json', 'Output as JSON')
   .action(async (remotePath, localPath, options) => {
     await onedriveCommands.download(remotePath, localPath, {
+      force: options.force,
       json: options.json,
     });
   });
@@ -578,9 +584,11 @@ sharepointCommand
   .argument('<site>', 'Site URL (hostname:/path) or site ID')
   .argument('<file-path>', 'Remote file path')
   .argument('[local-path]', 'Local destination path (default: current directory)')
+  .option('--force', 'Overwrite an existing local file')
   .option('--json', 'Output as JSON')
   .action(async (site, filePath, localPath, options) => {
     await sharepointCommands.download(site, filePath, localPath, {
+      force: options.force,
       json: options.json,
     });
   });

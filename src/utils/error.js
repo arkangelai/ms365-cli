@@ -3,6 +3,7 @@
  */
 
 import { getAccountType } from '../auth/token-manager.js';
+import { redactSensitiveData } from './security.js';
 
 export class M365Error extends Error {
   constructor(message, code, details = null) {
@@ -65,7 +66,7 @@ export function handleError(error, options = {}) {
     };
     
     if (error.details) {
-      errorObj.details = error.details;
+      errorObj.details = redactSensitiveData(error.details);
     }
     
     if (error.statusCode) {
@@ -77,7 +78,7 @@ export function handleError(error, options = {}) {
     console.error(`\n❌ Error: ${error.message}`);
     
     if (error.details) {
-      console.error(`   Details: ${JSON.stringify(error.details, null, 2)}`);
+      console.error(`   Details: ${JSON.stringify(redactSensitiveData(error.details), null, 2)}`);
     }
     
     // Show helpful suggestions for consent errors

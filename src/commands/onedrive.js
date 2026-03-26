@@ -11,8 +11,8 @@ import { handleError } from '../utils/error.js';
 import { getAccountType } from '../auth/token-manager.js';
 import { readFile, writeFile } from 'fs/promises';
 import { basename } from 'path';
-import { createReadStream, createWriteStream } from 'fs';
 import { stat } from 'fs/promises';
+import { assertSafeToWrite, createSafeWriteStream, resolveOutputPath } from '../utils/files.js';
 
 /**
  * OneDrive commands
@@ -57,7 +57,7 @@ export async function getMetadata(path, options = {}) {
  */
 export async function downloadFile(remotePath, localPath, options = {}) {
   try {
-    const { json = false } = options;
+    const { json = false, force = false } = options;
     
     if (!remotePath) {
       throw new Error('Remote path is required');
@@ -71,7 +71,8 @@ export async function downloadFile(remotePath, localPath, options = {}) {
     }
     
     // Determine local path
-    const targetPath = localPath || metadata.name;
+    const targetPath = resolveOutputPath(localPath, metadata.name);
+    assertSafeToWrite(targetPath, { force });
     
     if (!json) {
       console.log(`⬇️  Downloading: ${metadata.name}`);
@@ -82,7 +83,7 @@ export async function downloadFile(remotePath, localPath, options = {}) {
     const response = await graphClient.onedrive.download(remotePath);
     
     // Write to file
-    const fileStream = createWriteStream(targetPath);
+    const fileStream = createSafeWriteStream(targetPath, { force });
     const reader = response.body.getReader();
     
     let downloadedBytes = 0;

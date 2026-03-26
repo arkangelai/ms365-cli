@@ -240,10 +240,29 @@ export async function updateEvent(id, options) {
  */
 export async function deleteEvent(id, options) {
   try {
-    const { json = false } = options;
+    const { json = false, force = false } = options;
     
     if (!id) {
       throw new Error('Event ID is required');
+    }
+
+    if (!force && !json) {
+      const readline = await import('readline');
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+
+      const answer = await new Promise((resolve) => {
+        rl.question('⚠️  Delete this calendar event? This cannot be undone. (y/N): ', resolve);
+      });
+
+      rl.close();
+
+      if (answer.toLowerCase() !== 'y' && answer.toLowerCase() !== 'yes') {
+        console.log('Cancelled.');
+        return;
+      }
     }
     
     await graphClient.calendar.delete(id);

@@ -2,21 +2,20 @@
   "tenantId": "common",
   "clientId": "091b3d7b-e217-4410-868c-01c3ee6189b6",
   "workScopes": [
-    "https://graph.microsoft.com/Mail.ReadWrite",
+    "https://graph.microsoft.com/Mail.Read",
     "https://graph.microsoft.com/Mail.Send",
-    "https://graph.microsoft.com/Calendars.ReadWrite",
-    "https://graph.microsoft.com/Files.ReadWrite",
+    "https://graph.microsoft.com/Calendars.Read",
+    "https://graph.microsoft.com/Files.Read",
     "https://graph.microsoft.com/User.Read",
-    "https://graph.microsoft.com/User.ReadBasic.All",
     "https://graph.microsoft.com/Contacts.Read",
     "offline_access",
     "https://graph.microsoft.com/MailboxSettings.Read"
   ],
   "personalScopes": [
-    "https://graph.microsoft.com/Mail.ReadWrite",
+    "https://graph.microsoft.com/Mail.Read",
     "https://graph.microsoft.com/Mail.Send",
-    "https://graph.microsoft.com/Calendars.ReadWrite",
-    "https://graph.microsoft.com/Files.ReadWrite",
+    "https://graph.microsoft.com/Calendars.Read",
+    "https://graph.microsoft.com/Files.Read",
     "https://graph.microsoft.com/User.Read",
     "https://graph.microsoft.com/Contacts.Read",
     "offline_access"

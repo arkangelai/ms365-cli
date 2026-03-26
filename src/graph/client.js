@@ -1,6 +1,7 @@
 import { getAccessToken, forceRefreshAccessToken } from '../auth/token-manager.js';
 import config from '../utils/config.js';
 import { ApiError, parseGraphError } from '../utils/error.js';
+import { assertSafeGraphEndpoint } from '../utils/security.js';
 
 /**
  * Microsoft Graph API Client
@@ -78,6 +79,7 @@ class GraphClient {
     
     // Get access token (auto-refresh if needed)
     const token = await getAccessToken();
+    assertSafeGraphEndpoint(endpoint);
     
     // Build URL with query parameters
     let url = `${this.baseUrl}${endpoint}`;

@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync } from 'fs';
 import { join, dirname } from 'path';
 import { homedir } from 'os';
 
@@ -117,6 +117,7 @@ export function addTrustedSender(email) {
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
+  chmodSync(dir, 0o700);
   
   // Append to file
   const line = `\n${email}`;
@@ -134,6 +135,7 @@ export function addTrustedSender(email) {
 `;
       writeFileSync(path, header + email + '\n', 'utf-8');
     }
+    chmodSync(path, 0o600);
   } catch (error) {
     throw new Error(`Failed to add trusted sender: ${error.message}`);
   }
@@ -174,6 +176,7 @@ export function removeTrustedSender(email) {
     });
     
     writeFileSync(path, filtered.join('\n'), 'utf-8');
+    chmodSync(path, 0o600);
   } catch (error) {
     throw new Error(`Failed to remove trusted sender: ${error.message}`);
   }

@@ -4,6 +4,7 @@ import graphClient from '../graph/client.js';
 import { outputMailList, outputMailDetail, outputSendResult, outputAttachmentList, outputAttachmentDownload, outputMailDeleteResult, outputMailMoveResult, outputMailReplyResult, outputMailForwardResult, outputMailFolderList, outputMailFolderResult } from '../utils/output.js';
 import { handleError } from '../utils/error.js';
 import { isTrustedSender, addTrustedSender, removeTrustedSender, listTrustedSenders, getWhitelistFilePath } from '../utils/trusted-senders.js';
+import { assertSafeToWrite, resolveOutputPath } from '../utils/files.js';
 
 // Cache for current user's email
 let currentUserEmailCache = null;
@@ -266,7 +267,7 @@ export async function listAttachments(id, options) {
  */
 export async function downloadAttachment(messageId, attachmentId, localPath, options) {
   try {
-    const { json = false } = options;
+    const { json = false, force = false } = options;
     
     if (!messageId || !attachmentId) {
       throw new Error('Message ID and Attachment ID are required');
@@ -281,11 +282,12 @@ export async function downloadAttachment(messageId, attachmentId, localPath, opt
     
     // Determine output path
     const fileName = attachment.name || 'attachment';
-    const outputPath = localPath || fileName;
+    const outputPath = resolveOutputPath(localPath, fileName);
+    assertSafeToWrite(outputPath, { force });
     
     // Decode base64 content and save
     const buffer = Buffer.from(attachment.contentBytes, 'base64');
-    writeFileSync(outputPath, buffer);
+    writeFileSync(outputPath, buffer, { flag: force ? 'w' : 'wx' });
     
     const result = {
       name: fileName,
