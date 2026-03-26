@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+test-results.log
+manual-tests.log
+
+# Test reports and temporary files
+*-REPORT.md
+TEST_RESULTS.md
+TEST_SUMMARY.md
+test-issue-*.sh
+
+# Temporary directories
+tmp/
+temp/
+/tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Credentials (just in case)
+*.creds
+creds/
+.env
+.env.local
+.env.integration
+
+# Integration test credentials
+integration-credentials.json

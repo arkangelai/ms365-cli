@@ -1,0 +1,52 @@
+{
+  "name": "m365-cli",
+  "version": "0.4.2",
+  "description": "Microsoft 365 CLI - Manage Mail, Calendar, and OneDrive from the command line",
+  "type": "module",
+  "files": [
+    "bin",
+    "src",
+    "config",
+    "README.md"
+  ],
+  "main": "src/index.js",
+  "bin": {
+    "m365": "bin/m365.js"
+  },
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:unit": "vitest run tests/unit/",
+    "test:integration": "vitest run --testTimeout=30000 --hookTimeout=30000 tests/integration/",
+    "link": "npm link",
+    "unlink": "npm unlink -g m365-cli"
+  },
+  "keywords": [
+    "microsoft365",
+    "office365",
+    "graph-api",
+    "cli",
+    "email",
+    "calendar",
+    "onedrive"
+  ],
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arkangelai/ms365-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/arkangelai/ms365-cli/issues"
+  },
+  "homepage": "https://github.com/arkangelai/ms365-cli#readme",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "commander": "^12.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.18"
+  }
+}
