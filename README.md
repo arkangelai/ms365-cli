@@ -78,6 +78,17 @@ m365 calendar list --days 7
 m365 onedrive ls
 ```
 
+## Security Notes
+
+- Credentials are currently stored in a local JSON file with restrictive permissions.
+- The current hardening sets the credentials directory to `700` and the credentials file to `600`.
+- This is acceptable for local development, but it is not the end state for a production-grade CLI.
+- The next security milestone is migrating token storage to OS-backed secure storage:
+  - macOS Keychain
+  - Windows Credential Manager
+  - libsecret/keyring on Linux
+- If you need mutating operations after the least-privilege defaults, request the extra scopes explicitly with `m365 login --add-scopes ...`.
+
 ## Commands Reference
 
 ### Authentication
