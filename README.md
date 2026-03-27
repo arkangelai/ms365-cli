@@ -46,6 +46,13 @@ npm link
 
 After linking, the `m365` command will be available globally.
 
+## Project Policies
+
+- [License](./LICENSE)
+- [Contributing](./CONTRIBUTING.md)
+- [Security Policy](./SECURITY.md)
+- [Code of Conduct](./CODE_OF_CONDUCT.md)
+
 ## Quick Start
 
 ### 1. Login
