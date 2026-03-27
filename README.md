@@ -78,6 +78,20 @@ m365 calendar list --days 7
 m365 onedrive ls
 ```
 
+## Security Notes
+
+- Default login now uses least-privilege scopes for read operations plus `Mail.Send`.
+- Mutating operations that need broader access should be enabled explicitly with `m365 login --add-scopes ...`.
+- Credentials are still stored in a local JSON file, but the hardening pass now enforces:
+  - credentials directory mode `700`
+  - credentials file mode `600`
+  - lock file mode `600`
+- The remaining follow-up is migrating token storage to OS-backed secure storage:
+  - macOS Keychain
+  - Windows Credential Manager
+  - libsecret/keyring on Linux
+- See [`docs/secure-token-storage-plan.md`](docs/secure-token-storage-plan.md) for the next milestone.
+
 ## Commands Reference
 
 ### Authentication
@@ -140,6 +154,7 @@ m365 mail attachments <id> [options]
 
 # Download attachment
 m365 mail download-attachment <message-id> <attachment-id> [local-path] [options]
+  --force                           # Overwrite an existing local file
   --json                            # Output as JSON
 
 # Delete email
@@ -302,6 +317,7 @@ m365 calendar update <id> [options]
 
 # Delete event
 m365 calendar delete <id> [options]
+  --force                           # Skip confirmation prompt
   --json                            # Output as JSON
 ```
 
@@ -334,6 +350,7 @@ m365 onedrive get <path> [options]
 
 # Download file
 m365 onedrive download <remote-path> [local-path] [options]
+  --force                           # Overwrite an existing local file
   --json                            # Output as JSON
 
 # Upload file
@@ -414,6 +431,7 @@ m365 sharepoint files <site> [path] [options]
 
 # Download file
 m365 sharepoint download <site> <file-path> [local-path] [options]
+  --force                           # Overwrite an existing local file
   --json                            # Output as JSON
 
 # Upload file
@@ -490,7 +508,7 @@ m365 user search "John" --top 5 --json
 
 Credentials are stored at: `~/.m365-cli/credentials.json`
 
-**Security:** File permissions are set to `600` (owner read/write only). Do not share this file.
+**Security:** This file is currently plaintext local storage protected by file permissions (`600`). Do not share it. The planned migration to OS-backed secure storage is documented in [`docs/secure-token-storage-plan.md`](docs/secure-token-storage-plan.md).
 
 ### Timezone
 
@@ -521,7 +539,7 @@ The detected timezone is cached for the duration of each CLI invocation, so the 
 #### Option 1: Use Existing Application (Quick Start)
 
 This tool comes pre-configured with a shared Azure AD application:
-- **Tenant ID**: `5b4c4b46-4279-4f19-9e5d-84ea285f9b9c`
+- **Tenant ID**: `common`
 - **Client ID**: `091b3d7b-e217-4410-868c-01c3ee6189b6`
 
 No additional setup required — just run `m365 login` and you're ready to go.
@@ -562,14 +580,17 @@ For production use or organizational requirements, you can register your own Azu
 1. Go to **API permissions** (left sidebar)
 2. Click **Add a permission** > **Microsoft Graph** > **Delegated permissions**
 3. Add the following permissions:
-   - `Mail.ReadWrite` - Read and write mail
+   - `Mail.Read` - Read mail
    - `Mail.Send` - Send mail as the user
-   - `Calendars.ReadWrite` - Read and write calendar events
+   - `Calendars.Read` - Read calendar events
    - `MailboxSettings.Read` - Read user mailbox settings (used for timezone detection)
-   - `Files.ReadWrite` - Read and write files in OneDrive
+   - `Files.Read` - Read files in OneDrive
+   - `Mail.ReadWrite` - Optional: write mail state and content
+   - `Calendars.ReadWrite` - Optional: create/update/delete calendar events
+   - `Files.ReadWrite` - Optional: upload/replace/remove OneDrive files
    - `Sites.ReadWrite.All` - Read and write SharePoint sites (**requires admin consent**; not included in default login — use `--add-scopes` to add)
    - `User.Read` - Sign in and read user profile (added by default)
-   - `User.ReadBasic.All` - Read basic profiles of other users
+   - `User.ReadBasic.All` - Optional: read basic profiles of other users
    - `Contacts.Read` - Read user contacts
 4. Click **Add permissions**
 5. Click **Grant admin consent for [Your Organization]** (admin approval required)
@@ -609,10 +630,13 @@ az ad app update --id $APP_ID --is-fallback-public-client true
 # Add Microsoft Graph permissions
 # Permission IDs for Microsoft Graph (00000003-0000-0000-c000-000000000000):
 #   User.Read: e1fe6dd8-ba31-4d61-89e7-88639da4683d
+#   Mail.Read: 570282fd-fa5c-430d-a7fd-fc8dc98a9dca
 #   Mail.ReadWrite: e2a3a72e-5f79-4c64-b1b1-878b674786c9
 #   Mail.Send: e383f46e-2787-4529-855e-0e479a3ffac0
+#   Calendars.Read: 798ee544-9d2d-430c-a058-570e29e34338
 #   Calendars.ReadWrite: 1ec239c2-d7c9-4623-a91a-a9775856bb36
 #   MailboxSettings.Read: 87f447af-9fa4-4c32-9dfa-4a57a73d18ce
+#   Files.Read: 10465720-29dd-4523-a11a-6a75c743c9d9
 #   Files.ReadWrite: 5c28f0bf-8a70-41f1-8ab2-9032436ddb65
 #   Sites.ReadWrite.All: 89fe6a52-be36-487e-b7d8-d061c450a026
 #   User.ReadBasic.All: b340eb25-3456-403f-be2f-af7a0d370277
@@ -622,10 +646,13 @@ az ad app permission add --id $APP_ID \
   --api 00000003-0000-0000-c000-000000000000 \
   --api-permissions \
     e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope \
+    570282fd-fa5c-430d-a7fd-fc8dc98a9dca=Scope \
     e2a3a72e-5f79-4c64-b1b1-878b674786c9=Scope \
     e383f46e-2787-4529-855e-0e479a3ffac0=Scope \
+    798ee544-9d2d-430c-a058-570e29e34338=Scope \
     1ec239c2-d7c9-4623-a91a-a9775856bb36=Scope \
     87f447af-9fa4-4c32-9dfa-4a57a73d18ce=Scope \
+    10465720-29dd-4523-a11a-6a75c743c9d9=Scope \
     5c28f0bf-8a70-41f1-8ab2-9032436ddb65=Scope \
     b340eb25-3456-403f-be2f-af7a0d370277=Scope \
     ff74d97f-43af-4b68-9f2a-b77ee6968c5d=Scope \
@@ -667,18 +694,24 @@ You should see the Device Code Flow prompt. Follow the authentication steps in y
 
 ### Permissions
 
-The application requests the following Microsoft Graph permissions at login:
-- `Mail.ReadWrite` - Read and write mail
+The default login requests the following Microsoft Graph permissions:
+- `Mail.Read` - Read mail
 - `Mail.Send` - Send mail
-- `Calendars.ReadWrite` - Read and write calendar events
+- `Calendars.Read` - Read calendar events
 - `MailboxSettings.Read` - Read user mailbox settings (timezone auto-detection)
-- `Files.ReadWrite` - Read and write files in OneDrive
+- `Files.Read` - Read files in OneDrive
 - `User.Read` - Sign in and read user profile
-- `User.ReadBasic.All` - Read basic profiles of other users
 - `Contacts.Read` - Read user contacts
 - `offline_access` - Maintain access with refresh tokens (enables persistent login)
 
-> **Note:** `Sites.ReadWrite.All` requires tenant administrator approval (admin consent). It is not included in the default login scopes to avoid authentication failures for users whose tenant admin has not yet approved this permission. To use SharePoint commands, re-login with the scope added:
+Optional write or elevated scopes:
+- `Mail.ReadWrite` - Write mail state/content
+- `Calendars.ReadWrite` - Create/update/delete calendar events
+- `Files.ReadWrite` - Upload/replace/delete OneDrive files
+- `User.ReadBasic.All` - Search org user directory
+- `Sites.ReadWrite.All` - SharePoint access (**requires admin consent**)
+
+> **Note:** `Sites.ReadWrite.All` still requires tenant administrator approval (admin consent). It is not included in the default login scopes to avoid authentication failures for users whose tenant admin has not yet approved this permission. To use SharePoint commands, re-login with the scope added:
 >
 > ```bash
 > m365 login --add-scopes Sites.ReadWrite.All
@@ -801,7 +834,7 @@ SharePoint requires the `Sites.ReadWrite.All` permission, which is **not** inclu
 2. If that fails, ensure your tenant admin has granted admin consent for `Sites.ReadWrite.All` on the Azure AD app registration.
 3. You can also login with a complete custom scope list:
    ```bash
-   m365 login --scopes User.Read,Files.ReadWrite,Sites.ReadWrite.All,offline_access
+   m365 login --scopes User.Read,Files.Read,Sites.ReadWrite.All,offline_access
    ```
 
 ### Network errors
@@ -812,12 +845,16 @@ SharePoint requires the `Sites.ReadWrite.All` permission, which is **not** inclu
 
 ## Security
 
-- Explicit scope management — SharePoint permissions (`Sites.ReadWrite.All`) added via `--add-scopes` when needed, since they require tenant admin approval
-- Credentials stored with `600` permissions
+- Least-privilege default scopes for login
+- Explicit scope escalation with `--add-scopes` when mutating commands require more access
+- SharePoint permissions (`Sites.ReadWrite.All`) added explicitly when needed, since they require tenant admin approval
+- Credentials stored in a local plaintext file protected by `600` permissions
+- Credentials directory protected by `700` permissions
 - OAuth 2.0 Device Code Flow
 - Automatic token refresh
-- No sensitive data in logs
+- Secret-like values redacted from structured error output
 - HTTPS-only communication
+- Secure storage migration plan tracked in [`docs/secure-token-storage-plan.md`](docs/secure-token-storage-plan.md)
 
 ## License
 
@@ -829,5 +866,5 @@ Contributions welcome! Please open an issue or PR.
 
 ---
 
-**Current Version**: 0.1.0  
-**Updated**: 2026-03-15
+**Current Version**: 0.4.2  
+**Updated**: 2026-03-27
