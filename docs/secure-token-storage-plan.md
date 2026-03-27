@@ -18,6 +18,7 @@ Replace plaintext local token storage with OS-backed secure storage while preser
 - Non-secret metadata can remain in a local config file if needed
 - Account switching remains explicit and isolated
 - Logout fully clears both secure storage entries and local metadata
+- The auth layer continues to expose one logical credential record to callers, even if secrets and metadata are stored separately underneath
 
 ## Platform Targets
 
@@ -40,10 +41,12 @@ Replace plaintext local token storage with OS-backed secure storage while preser
 ## Implementation Outline
 
 1. Introduce a storage interface
-- `loadCreds()`
-- `saveCreds()`
-- `deleteCreds()`
-- `listAccounts()` if multi-account support expands later
+- Preserve the current `token-manager` contract for callers:
+  - `loadCreds()` returns the same logical shape used today by auth flows
+  - `saveCreds()` accepts that same logical shape and decides where secret vs non-secret fields live
+  - `deleteCreds()` clears both secure-store secrets and local metadata
+  - `listAccounts()` can remain optional unless multi-account support expands
+- Keep call sites such as `getAccountType()`, token refresh, and command routing unaware of provider-specific storage details
 
 2. Split secret vs non-secret state
 - Secret:
@@ -60,11 +63,15 @@ Replace plaintext local token storage with OS-backed secure storage while preser
 - `credential-manager` provider for Windows
 - `libsecret` provider for Linux
 - optional `file` provider only as explicit fallback for unsupported systems
+- document the minimum platform behavior when secure storage is unavailable so the CLI fails predictably
 
 4. Add migration path
 - detect existing `credentials.json`
-- migrate secrets into secure storage on successful login or explicit migration command
+- migrate on first successful authenticated read/startup, not only on a new login
+- allow an explicit migration command for recovery and support workflows
+- make migration idempotent so repeated reads/logins are safe
 - remove or reduce plaintext fields after successful migration
+- ensure existing users do not remain on plaintext storage indefinitely just because they never rerun `login`
 
 5. Update logout semantics
 - clear secure storage entry
@@ -72,14 +79,17 @@ Replace plaintext local token storage with OS-backed secure storage while preser
 - clean stale lock files
 
 6. Add tests
+- contract tests that verify `loadCreds()` still returns the shape current callers expect
 - provider contract tests
 - migration tests from file storage
+- migration-on-read tests for existing users with old `credentials.json`
 - logout/removal tests
 - multi-account isolation tests
 
 ## Acceptance Criteria
 
 - No tokens stored plaintext by default on supported platforms
+- Existing plaintext credentials are migrated during normal authenticated use, without requiring a fresh login
 - Existing users can migrate without rearchitecting commands
 - Login, refresh, and logout flows still pass automated tests
 - Errors do not leak secret material
