@@ -16,7 +16,7 @@ Use `--json` for structured output suitable for AI agent consumption (most comma
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20.19+
 - `m365-cli` installed globally: `npm install -g m365-cli`
 - Authenticated: `m365 login --account-type personal`
 

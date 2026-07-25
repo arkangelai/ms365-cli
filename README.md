@@ -797,7 +797,7 @@ See [`skills/README.md`](skills/README.md) for setup instructions.
 
 ### Tech Stack
 
-- **Node.js 18+** - ESM modules, native fetch API
+- **Node.js 20.19+** - ESM modules, native fetch API
 - **commander.js** - CLI framework
 - **Microsoft Graph API** - M365 services
 
