@@ -17,7 +17,7 @@ Use `--json` for structured output suitable for AI agent consumption.
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20.19+
 - `m365-cli` installed globally: `npm install -g m365-cli`
 - Authenticated: `m365 login` (work/school is the default account type)
 - For SharePoint: `m365 login --add-scopes Sites.ReadWrite.All` (requires tenant admin consent)
